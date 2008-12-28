@@ -1,0 +1,38 @@
+RubyInline Haskell
+
+class Fib
+  def self.fib(n)
+    case n
+    when 0
+      return 0
+    when 1
+      return 1
+    else
+      fib(n-2) + fib(n-1)
+    end
+  end
+end
+
+You can write it such as
+
+class Fib
+  RubyInlineHaskell.classmethods << QED
+    fib :: Fixnum -> Fixnum
+    fib 0 = 0
+    fib 1 = 1
+    fib n = fib(n-2) + fib(n-1)
+  QED
+end
+
+You can also get the corresponding type checking tests.
+
+class FibTest < Test::Unit::TestCase
+  def test_fib_type
+    n = rand(10)
+    assert_equal Fixnum, Fib.fib(n).class
+  end
+end
+
+# KNOWN ISSUE: fib(n) may become Bignum.
+
+2008-12-28 Implemented in my dream.
