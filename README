@@ -24,12 +24,12 @@ class Fib
   QED
 end
 
-You can also get the corresponding type checking tests.
+You can also get the corresponding type checking specs.
 
-class FibTest < Test::Unit::TestCase
-  def test_fib_type
+describe Fib
+  it 'fib :: Fixnum -> Fixnum' do
     n = rand(10)
-    assert_equal Fixnum, Fib.fib(n).class
+    Fib.fib(n).class.should == Fixnum
   end
 end
 
