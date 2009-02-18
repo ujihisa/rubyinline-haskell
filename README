@@ -34,5 +34,7 @@ describe Fib
 end
 
 # KNOWN ISSUE: fib(n) may become Bignum.
+# KNOWN ISSUE: It doesn't support type variable like "[a]"
+
 
 2008-12-28 Implemented in my dream.
