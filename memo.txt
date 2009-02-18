@@ -1,0 +1,71 @@
+[INPUT]
+class Fib
+  RubyInlineHaskell.classmethods << QED
+    fib :: Fixnum -> Fixnum
+    fib 0 = 0
+    fib 1 = 1
+    fib n = fib(n-2) + fib(n-1)
+
+    sum :: [a] -> a
+    sum [] = 0
+    sum (x:xs) = x + sum xs
+  QED
+end
+
+[STEP 1]
+RubyInlineHaskell.classmethods got current class "Fib" and a Haskell code string.
+  fib :: Fixnum -> Fixnum
+  fib 0 = 0
+  fib 1 = 1
+  fib n = fib(n-2) + fib(n-1)
+
+  sum :: [a] -> a
+  sum [] = 0
+  sum (x:xs) = x + sum xs
+
+[STEP 2]
+tokenize
+[('fib', (:typedef, ['Fixnum', 'Fixnum']),
+ ('fib', (:litarg, 0, '0')),
+ ('fib', (:litarg, 1, '1')),
+ ('fib', (:vararg, ['n'], 'fib(n-2) + fib(n-1)'),
+ ('sum', (:typedef, ['[a]', 'a']),
+ ('sum', (:litarg, [], '0')),
+ ('sum', (:vararg, ['x', 'xs'], 'x + sum xs'))]
+
+[STEP 3]
+hashize
+{
+  :fib => {
+    :typedef => ['Fixnum', 'Fixnum'],
+    :litargs => {0 => '0', 1 => '1'},
+    :vararg => ['n', 'fib(n-2) + fib(n-1)']},
+  :sum => {
+    :typedef => ['[a]', 'a'],
+    :litargs => {[] => '0'},
+    :vararg => ['x:xs', 'x + sum xs']}
+}
+
+[OUTPUT]
+class Fib
+  def self.fib(n)
+    case n
+    when 0
+      return 0
+    when 1
+      return 1
+    else
+      fib(n-2) + fib(n-1)
+    end
+  end
+
+  def sum(xs)
+    case xs
+    when []
+      return 0
+    else
+      x, *xs = *xs
+      x + sum xs
+    end
+  end
+end
