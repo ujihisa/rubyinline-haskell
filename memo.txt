@@ -1,27 +1,33 @@
 [INPUT]
 class Fib
-  RubyInlineHaskell.classmethods << QED
+  extend RubyInlineHaskell
+  pp haskell <<-QED
     fib :: Fixnum -> Fixnum
     fib 0 = 0
     fib 1 = 1
     fib n = fib(n-2) + fib(n-1)
 
-    sum :: [a] -> a
+    sum :: [Fixnum] -> Fixnum
     sum [] = 0
     sum (x:xs) = x + sum xs
+
+    zero :: Fixnum
+    zero = 0
   QED
 end
 
 [STEP 1]
 RubyInlineHaskell.classmethods got current class "Fib" and a Haskell code string.
-  fib :: Fixnum -> Fixnum
   fib 0 = 0
   fib 1 = 1
   fib n = fib(n-2) + fib(n-1)
 
-  sum :: [a] -> a
+  sum :: [Fixnum] -> Fixnum
   sum [] = 0
   sum (x:xs) = x + sum xs
+
+  zero :: Fixnum
+  zero = 0
 
 [STEP 2]
 tokenize
@@ -29,9 +35,10 @@ tokenize
  ('fib', (:litarg, 0, '0')),
  ('fib', (:litarg, 1, '1')),
  ('fib', (:vararg, ['n'], 'fib(n-2) + fib(n-1)'),
- ('sum', (:typedef, [(Array, Fixnum), Fixnum]),
+ ('sum', (:typedef, [[Fixnum], Fixnum]),
  ('sum', (:litarg, [], '0')),
- ('sum', (:vararg, ['x', 'xs'], 'x + sum xs'))]
+ ('sum', (:vararg, ['x', 'xs'], 'x + sum xs')),
+ ('zero', (:noarg, '0'))]]
 
 [STEP 3]
 hashize
@@ -39,11 +46,18 @@ hashize
   :fib => {
     :typedef => ['Fixnum', 'Fixnum'],
     :litargs => {0 => '0', 1 => '1'},
-    :vararg => ['n', 'fib(n-2) + fib(n-1)']},
+    :vararg => ['n'],
+    :def => 'fib(n-2) + fib(n-1)'},
   :sum => {
     :typedef => [(Array, Fixnum), Fixnum],
     :litargs => {[] => '0'},
-    :vararg => ['x:xs', 'x + sum xs']}
+    :varargs => ['x', 'xs']
+    :def => 'x + sum xs'},
+  :zero => {
+    :typedef => [Fixnum],
+    :litargs => {},
+    :varargs => [],
+    :def => '0'}
 }
 
 [OUTPUT]
@@ -68,6 +82,10 @@ class Fib
       x + sum xs
     end
   end
+
+  def zero
+    0
+  end
 end
 
 describe Fib
@@ -79,5 +97,9 @@ describe Fib
   it 'sum :: [Fixnum] -> Fixnum' do
     xs = Array.new(10) { rand(10) }
     Fib.sum(xs).class.should == Fixnum
+  end
+
+  it 'zero :: Fixnum' do
+    Fib.zero.class.should == Fixnum
   end
 end
