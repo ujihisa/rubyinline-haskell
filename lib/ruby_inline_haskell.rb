@@ -1,10 +1,11 @@
 module RubyInlineHaskell
   def haskell(code)
-    code.map(&:strip).
+    tokens = code.map(&:strip).
       reject(&:empty?).
       map {|line|
         tokenize_line(line)
       }
+    hashize(tokens)
   end
   private :haskell
 
@@ -33,6 +34,30 @@ module RubyInlineHaskell
     /^([0-9]+|\[\])$/ =~ arg
   end
   private :literal?
+
+  def hashize(tokens)
+    hash = {}
+    tokens.map(&:first).uniq.each do |name|
+      tmp = {:litarg => {}, :vararg => []}
+      tokens.select {|i| i.first == name }.
+        each do |_, (type, *vars)|
+          case type
+          when :typedef
+            tmp[:typedef] = vars[0]
+          when :litarg
+            tmp[:litarg].update(vars[0] => vars[1])
+          when :vararg
+            tmp[:vararg] = vars[0]
+            tmp[:def] = vars[1]
+          when :noarg
+            tmp[:def] = vars
+          end
+        end
+      hash[name.intern] = tmp
+    end
+    hash
+  end
+  private :hashize
 end
 
 if $0 == __FILE__
