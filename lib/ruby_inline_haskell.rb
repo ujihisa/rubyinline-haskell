@@ -5,7 +5,8 @@ module RubyInlineHaskell
       map {|line|
         tokenize_line(line)
       }
-    hashize(tokens)
+    hash = hashize(tokens)
+    rubyize(hash)
   end
   private :haskell
 
@@ -58,13 +59,42 @@ module RubyInlineHaskell
     hash
   end
   private :hashize
+
+  def rubyize(hash)
+    tmp = hash.map {|key, value|
+      if value[:vararg].empty?
+        "  def #{key}\n    #{value[:def]}\n  end"
+      else
+        inside = ''
+        if value[:vararg].size == 2 # FIXME
+          inside << "    #{value[:vararg][0]}, *#{value[:vararg][1]} = #{value[:vararg][0]}\n"
+        end
+        inside << "    case #{value[:vararg].first}\n"
+        value[:litarg].each do |k, v|
+          inside << "    when #{k.inspect}\n" <<
+            "      #{v}\n"
+        end
+        inside << "    else\n"
+        inside << "      #{value[:def]}\n"
+        inside << '    end'
+        "  def #{key}(#{value[:vararg].first})\n#{inside}\n  end"
+      end
+    }.join("\n\n")
+    return <<-QED # {{{
+class #{self}
+#{tmp}
+end
+    QED
+    # }}}
+  end
+  private :rubyize
 end
 
 if $0 == __FILE__
   require 'pp'
   class Fib
     extend RubyInlineHaskell
-    pp haskell <<-QED
+    puts haskell <<-QED # {{{
       fib :: Fixnum -> Fixnum
       fib 0 = 0
       fib 1 = 1
@@ -77,5 +107,7 @@ if $0 == __FILE__
       zero :: Fixnum
       zero = 0
     QED
+    # }}}
   end
 end
+# vim: foldmethod=marker
